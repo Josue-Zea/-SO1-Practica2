@@ -1,0 +1,7 @@
+Base de datos
+docker run -d -p 27017:27017 --name db \
+-e MONGO_INITDB_ROOT_USERNAME=mongoadmin \
+-e MONGO_INITDB_ROOT_PASSWORD=secret \
+mongo
+
+mongodb://mongoadmin@secret@35.223.172.84:27017
