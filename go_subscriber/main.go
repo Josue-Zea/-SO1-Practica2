@@ -6,14 +6,9 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
-	"database/sql"
-
-	"github.com/go-redis/redis/v8"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
-	"github.com/segmentio/ksuid"
 	"github.com/streadway/amqp"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -41,22 +36,6 @@ func loadEnv() {
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error al cargar variables de entorno")
-	}
-}
-
-func sendToDataBases(game Game) {
-	loadEnv()
-	mongo := os.Getenv("ENABLE_MONGO")
-	if mongo == "1" {
-		sendToMongo(game)
-	}
-	redis := os.Getenv("ENABLE_REDIS")
-	if redis == "1" {
-		sendToRedis(game)
-	}
-	tidb := os.Getenv("ENABLE_TIDB")
-	if tidb == "1" {
-		sendToTidb(game)
 	}
 }
 
@@ -89,64 +68,12 @@ func main() {
 			var game Game
 			b := []byte(string(d.Body))
 			json.Unmarshal(b, &game)
-			sendToDataBases(game)
-			fmt.Println("Sending log to databases")
+			sendToMongo(game)
 		}
 	}()
 	fmt.Println("Succesfully connected to RabbitMQ")
 	fmt.Println("[*] - waiting for messages")
 	<-noStop
-}
-
-func sendToRedis(game Game) {
-	var ctx = context.Background()
-	loadEnv()
-	finalUrl := os.Getenv("REDIS_DIRECTION")
-	client := redis.NewClient(&redis.Options{
-		Addr:     finalUrl,
-		Password: "",
-		DB:       0,
-	})
-	json, err := json.Marshal(game)
-	if err != nil {
-		log.Fatal(err)
-	}
-	id := ksuid.New()
-	err = client.Set(ctx, id.String(), json, 0).Err()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Log insertado, redis ", id.String())
-}
-
-func sendToTidb(game Game) {
-	loadEnv()
-	finalUrl := os.Getenv("TIDB_CONNECTION")
-	// Open database connection
-	db, err := sql.Open("mysql", finalUrl)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-	sql := getQuery(game)
-	res, err := db.Exec(sql)
-	if err != nil {
-		log.Fatal(err)
-	}
-	lastId, err := res.LastInsertId()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Printf("Log insertado, tidb: %d\n", lastId)
-}
-
-func getQuery(game Game) string {
-	gameid := strconv.FormatInt(int64(game.GameId), 10)
-	players := strconv.FormatInt(int64(game.Players), 10)
-	game_name := game.Name
-	winner := strconv.FormatInt(int64(game.Winner), 10)
-	queue := game.Queue
-	return "INSERT INTO games (game_id, players, game_name, winner, queue) VALUES (" + gameid + "," + players + ",\"" + game_name + "\"," + winner + ",\"" + queue + "\");"
 }
 
 func sendToMongo(game Game) {
@@ -161,7 +88,7 @@ func sendToMongo(game Game) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	collection := client.Database("Practica1_f2").Collection("games")
+	collection := client.Database("Pr2").Collection("Practica2")
 	game2 := &GameMongo{
 		ID:      primitive.NewObjectID(),
 		GameId:  game.GameId,

@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: practica2-201807159
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: despliegue-pod
+  namespace: practica2-201807159
+  labels:
+    app: despliegue-pod
+spec:
+  selector:
+    matchLabels:
+      app: despliegue-pod
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: despliegue-pod
+    spec:
+      hostname: practica2-host
+      containers:
+        - name: rabbit
+          image: rabbitmq:management-alpine
+          ports:
+            - containerPort: 15672
+            - containerPort: 5672
+        - name: cliente
+          image: rocket1530/api_client_grpc_201807159
+          env:
+          - name: SERVER_NODE_PATH
+            value: "practica2-host:50051"
+          - name: GO_CLIENT_PORT
+            value: "5000"
+          ports:
+            - containerPort: 5000
+        - name: servidor
+          image: rocket1530/server_grpc_201807159
+          env:
+          - name: HOSTNAME_RABBIT
+            value: "practica2-host"
+          - name: PORT_RABBIT
+            value: "5672"
+          - name: USERNAME_RABBIT
+            value: "guest"
+          - name: PASSWORD_RABBIT
+            value: "guest"
+          ports:
+            - containerPort: 50051
+        - name: subscriber
+          image: rocket1530/subscriber_201807159
+          env:
+            - name: MONGO_DIRECTION
+              value: "mongodb://mongoadmin:secret@35.223.172.84:27017"
+            - name: RABBIT_DIRECTION
+              value: "practica2-host"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-pr2
+  namespace: practica2-201807159
+  labels:
+    app: despliegue-pod
+spec:
+  type: ClusterIP
+  selector:
+    app: despliegue-pod
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP

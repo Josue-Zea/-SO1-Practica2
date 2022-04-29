@@ -5,6 +5,8 @@ const {
   game4, 
   game5
 } = require("./helpers/games");
+const random = require("./helpers/random");
+const { createConnection }  = require("./helpers/rabbitConnection");
 
 //Para las variables de entorno
 require('dotenv').config();
@@ -26,7 +28,7 @@ var game_proto = grpc.loadPackageDefinition(packageDefinition).game;
 
 const PlayGame = async (call, callback) => {
   let result;
-  let gameid = call.request.gameid
+  let gameid = random(1, 5);
   switch (gameid) {
     case 1:
         result = await game1(call.request.players);
@@ -51,6 +53,7 @@ const PlayGame = async (call, callback) => {
 }
 
 const main = () => {
+  createConnection();
   var server = new grpc.Server();
   server.addService(game_proto.ExecuteGame.service, {
     PlayGame: PlayGame

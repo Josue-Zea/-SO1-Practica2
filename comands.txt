@@ -4,4 +4,27 @@ docker run -d -p 27017:27017 --name db \
 -e MONGO_INITDB_ROOT_PASSWORD=secret \
 mongo
 
-mongodb://mongoadmin@secret@35.223.172.84:27017
+mongodb://mongoadmin:secret@35.223.172.84:27017
+
+
+Para kubernetes
+gcloud config set compute/zone us-central1-a
+gcloud container clusters create practica2cluster --num-nodes=1 --tags=allin,allout --machine-type=n1-standard-2 --no-enable-network-policy
+
+Ver pods
+kubectl get pods -n practica2-201807159
+Ver servicios
+kubectl get servicies -n practica2-201807159
+
+Ver descripcion de pods
+kubectl describe pods -n practica2-201807159
+
+Para crear el load balancer
+kubectl expose deploy/despliegue-pod --type=LoadBalancer --port=5000 --namespace=practica2-201807159 --dry-run=client -o yaml >> loadBalance.yaml
+kubectl apply -f loadBalance.yaml
+
+Para ver los logs
+kubectl logs despliegue-pod-74d44b569c-b6pxp subscriber -n practica2-201807159
+
+Ver servicios
+kubectl get svc -n practica2-201807159

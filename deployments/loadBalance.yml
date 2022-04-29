@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: LoadBalancer
+metadata:
+  name: loadbalanceDemo
+  namespace: practica2
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: sopes1.carlosdavid.technology
+    http:
+      paths:
+      - pathType: Prefix
+        path: /
+        backend:
+          service:
+            name: svc-pr2
+            port:
+              number: 5000
+
+kubectl expose deploy/despliegue-pod --type=LoadBalancer --port=5000 --namespace=practica2-201807159 --dry-run=client -o yaml >> loadBalance.yaml

@@ -50,7 +50,7 @@ func game(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 	reply, err := c.PlayGame(ctx, &pb.GameRequest{
-		Gameid:  game.GameId,
+		Gameid:  1,
 		Players: game.Players,
 	})
 	if err != nil {
